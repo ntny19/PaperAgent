@@ -16,3 +16,17 @@ data/
 # editor
 .idea/
 .vscode/
+
+# OS junk
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# python tooling
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# logs
+*.log
