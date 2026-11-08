@@ -1,0 +1,18 @@
+# local settings and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# environment / caches
+.venv/
+__pycache__/
+*.pyc
+
+# search index = text of your papers (copyrighted, machine-specific)
+data/
+
+# editor
+.idea/
+.vscode/

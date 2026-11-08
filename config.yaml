@@ -1,0 +1,25 @@
+# Shared defaults (safe to commit). Machine-specific values - papers folder, repos, ports - live in .env (see .env.example).
+# Model choices and default reload automatically. Restart for other settings.
+
+port: 8765
+
+embedding:
+  url: "http://localhost:11434"
+  model: "nomic-embed-text"
+
+# Model picker. backend: agy | codex | claude | ollama   (no API keys: uses your logged-in CLIs; remove what you don't have)
+models:
+  - {id: gemini-flash,   label: "Gemini 3.8 Flash (agy)",       backend: agy,    model: gemini-3.8-flash-medium}
+  - {id: gemini-flash-hi, label: "Gemini 3.8 Flash High (agy)", backend: agy,    model: gemini-3.8-flash-high}
+  - {id: sonnet-5-5,     label: "Claude Sonnet 5.5 (claude)",   backend: claude, model: claude-sonnet-5-5}
+  - {id: opus-5-5,       label: "Claude Opus 5.5 (claude)",     backend: claude, model: claude-opus-5-5}
+  - {id: sonnet-4-6,     label: "Claude Sonnet 4.6 (agy)",      backend: agy,    model: claude-sonnet-4-6}
+  - {id: opus-4-6,       label: "Claude Opus 4.6 (agy)",        backend: agy,    model: claude-opus-4-6-thinking}
+  - {id: codex,          label: "Codex (default model)",       backend: codex,  model: ""}
+  - {id: gpt-6.1-sol,    label: "GPT-6.1 Sol (codex)",        backend: codex,  model: gpt-6.1-sol}
+  - {id: gpt-6.1-terra,  label: "GPT-6.1 Terra (codex)",      backend: codex,  model: gpt-6.1-terra}
+  - {id: gpt-6-astra,    label: "GPT-6 Astra (codex)",        backend: codex,  model: gpt-6-astra}
+  - {id: gpt-6-luna,     label: "GPT-6 Luna (codex)",         backend: codex,  model: gpt-6-luna}
+  - {id: gemma,          label: "gemma4:26b (offline, slow)",   backend: ollama, model: "gemma4:26b"}
+
+default_model: codex
