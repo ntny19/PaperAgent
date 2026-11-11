@@ -8,9 +8,11 @@ PaperAgent: a localhost-only (127.0.0.1:8765) FastAPI + WebSocket chat app. It a
 
 ## Commands
 
-There is no test suite, linter, or build step.
+There is no linter or build step.
 
 - Run: `start.bat` (creates `.venv` and installs `requirements.txt` if missing, opens the browser), or manually from the repo root: `.venv\Scripts\python -W ignore -m app.main`. It must run as a module from the repo root, since `app/` uses relative imports.
+- Tests: `.venv\Scripts\python -W ignore -m unittest discover -s tests` (offline guard/parser tests). Golden agent evals (real model + index): `.venv\Scripts\python -W ignore -m evals.run_evals [--model ID] [--case ID] [--list] [-v]`; cases live in `evals/golden.yaml`.
+- Logs: every turn is appended to `data/logs/YYYY-MM-DD.jsonl` by `app/trace.py` (masked; `PAPERAGENT_LOG=0` disables, `PAPERAGENT_LOG_FULL_PROMPT=1` keeps the system prompt). View with `python -m app.logview [-n N] [--full] [--tag eval]`.
 - Model choices and `default_model` in `config.yaml` reload for each state request and chat turn via `app/model_config.py`; the browser refreshes choices every three seconds. Other config and `.env` settings need a restart. `.env` is git-ignored; real environment variables override it.
 - `data/index.sqlite` is the search index and is safe to delete (it is rebuilt). Embeddings need Ollama at `embedding.url` with `nomic-embed-text`.
 
