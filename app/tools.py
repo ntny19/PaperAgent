@@ -102,6 +102,8 @@ async def list_repo_files(ctx: Ctx, path: str = ".", depth: int = 2) -> str:
     for dp, dirs, files in os.walk(base):
         rel_depth = len(Path(dp).relative_to(base).parts)
         dirs[:] = sorted(d for d in dirs if d not in SKIP_DIRS)
+        for d in dirs:  # list folders too, otherwise folders deeper than `depth` are invisible
+            lines.append(f"{(Path(dp) / d).relative_to(root).as_posix()}/  [folder]")
         if rel_depth >= depth:
             dirs[:] = []
         for f in sorted(files):

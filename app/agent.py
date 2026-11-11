@@ -6,7 +6,7 @@ import re
 import time
 from pathlib import Path
 
-from . import llm
+from . import llm, trace
 from .secrets_guard import mask_text
 from .tools import TOOLS, Ctx, ToolError, tools_doc
 
@@ -72,7 +72,24 @@ def parse_tool_call(text: str) -> dict | None:
     return None
 
 
-async def run_turn(ctx: Ctx, history: list[dict], model_entry: dict, ollama_url: str) -> str:
+async def run_turn(ctx: Ctx, history: list[dict], model_entry: dict, ollama_url: str, tag: str | None = None,
+                   stats: dict | None = None) -> str:
+    tl = trace.TurnLog(model_entry, history[-1]["content"] if history else "", ctx.workspace, tag)
+    answer, err = None, "cancelled"
+    try:
+        answer = await _loop(ctx, history, model_entry, ollama_url, tl)
+        err = None
+        return answer
+    except Exception as e:
+        err = f"{type(e).__name__}: {e}"
+        raise
+    finally:
+        tl.end(answer, err)
+        if stats is not None:
+            stats.update({k: tl.rec[k] for k in ("tokens_in", "tokens_out", "thinking", "tokens_estimated", "total_s", "id")})
+
+
+async def _loop(ctx: Ctx, history: list[dict], model_entry: dict, ollama_url: str, tl: trace.TurnLog) -> str:
     scratch: list[str] = []
     t0 = time.time()
     for step in range(MAX_STEPS + 1):
@@ -81,12 +98,17 @@ async def run_turn(ctx: Ctx, history: list[dict], model_entry: dict, ollama_url:
         if final_only:
             prompt += "\nYou are out of tool steps. Give the best final answer now, without a tool block."
         await ctx.emit({"type": "status", "text": f"thinking ({model_entry['label']})..."})
-        reply = await llm.complete(model_entry, prompt, ollama_url)
+        t1 = time.time()
+        usage: dict = {}
+        reply = await llm.complete(model_entry, prompt, ollama_url, usage=usage)
+        llm_s = time.time() - t1
         call = None if final_only else parse_tool_call(reply)
         if not call:
+            tl.step(step, prompt, reply, llm_s, usage=usage)
             return mask_text(reply.strip())
         name, args = call["name"], call["args"]
         await ctx.emit({"type": "tool_call", "name": name, "args": args})
+        t2 = time.time()
         entry = TOOLS.get(name)
         if not entry:
             result = f"Unknown tool '{name}'. Available: {', '.join(TOOLS)}"
@@ -100,6 +122,7 @@ async def run_turn(ctx: Ctx, history: list[dict], model_entry: dict, ollama_url:
             except Exception as e:  # never crash the loop
                 result = f"Tool failed: {type(e).__name__}: {e}"
         result = mask_text(result)
+        tl.step(step, prompt, reply, llm_s, call, result, time.time() - t2, usage)
         await ctx.emit({"type": "tool_result", "name": name, "text": result[:2500]})
         scratch.append(f"[TOOL_CALL] {json.dumps({'name': name, 'args': args}, ensure_ascii=False)}\n[TOOL_RESULT {name}]\n{result}")
     return "(no answer)"

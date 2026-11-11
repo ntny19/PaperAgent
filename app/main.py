@@ -159,7 +159,7 @@ async def ws_endpoint(ws: WebSocket):
         state_["ctx"] = ctx
         history.append({"role": "user", "content": msg["text"]})
         try:
-            answer = await agent.run_turn(ctx, history, model, OLLAMA)
+            answer = await agent.run_turn(ctx, history, model, OLLAMA, tag="chat")
             history.append({"role": "assistant", "content": answer})
             await emit({"type": "final", "text": answer})
         except asyncio.CancelledError:
